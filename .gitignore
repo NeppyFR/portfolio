@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vite
+
+# original unassembled source files, kept locally as a backup
+rescources/
