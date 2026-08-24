@@ -169,17 +169,20 @@ function Btn({ href, children }) {
   );
 }
 
-function Card({ children, style, hover = true }) {
+function Card({ children, style, hover = true, href }) {
   const ref = useRef(null);
+  // renders as an anchor when href is given, so the whole card is the click target
+  const Tag = href ? "a" : "div";
   return (
-    <div
+    <Tag
       ref={ref}
+      href={href}
       onMouseEnter={hover ? () => { const s = ref.current.style; s.transform = "translateY(-3px)"; s.borderColor = C.accent; } : undefined}
       onMouseLeave={hover ? () => { const s = ref.current.style; s.transform = "none"; s.borderColor = C.border; } : undefined}
-      style={{ border: `1px solid ${C.border}`, borderRadius: 14, background: C.bgSoft, transition: "transform .15s, border-color .15s", ...style }}
+      style={{ border: `1px solid ${C.border}`, borderRadius: 14, background: C.bgSoft, transition: "transform .15s, border-color .15s", ...(href && { display: "block", color: "inherit", textDecoration: "none" }), ...style }}
     >
       {children}
-    </div>
+    </Tag>
   );
 }
 
@@ -250,10 +253,8 @@ export default function Portfolio() {
           <SectionTitle>Projects</SectionTitle>
           <div style={{ display: "grid", gap: 14 }}>
             {PROJECTS.map((p, i) => (
-              <Card key={i} style={{ padding: "20px 22px" }}>
-                <h3 style={{ fontSize: "1.08rem", margin: 0 }}>
-                  <a href={p.href} style={{ color: C.text, textDecoration: "none" }}>{p.name}</a>
-                </h3>
+              <Card key={i} href={p.href} style={{ padding: "20px 22px" }}>
+                <h3 style={{ fontSize: "1.08rem", margin: 0 }}>{p.name}</h3>
                 <p style={{ color: C.muted, fontSize: "0.95rem", marginTop: 6 }}>{p.desc}</p>
               </Card>
             ))}
