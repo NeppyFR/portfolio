@@ -1,15 +1,32 @@
 import { useEffect, useRef } from "react";
 
 /* ---------- Data ---------- */
+// devicon has no mark for these two, so they ship their own artwork
+const ACCESS_ICON = (
+  <svg width="30" height="30" viewBox="0 0 24 24" style={{ flexShrink: 0 }}><rect x="2" y="4" width="20" height="16" rx="2" fill="#A4373A" /><path d="M8 8.5 6 15.5h1.4l.4-1.6h2l.4 1.6H11.6L9.6 8.5H8zm.1 4.2.6-2.5.6 2.5H8.1zM12.5 8.5h3.2v1.2h-1.9v1.6h1.7v1.2h-1.7v1.7h2v1.2h-3.3V8.5z" fill="#fff" /></svg>
+);
+
+const NOSQL_ICON = (
+  <svg width="30" height="30" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+    <path d="M12 2c3.87 0 7 1.25 7 2.8v14.4c0 1.55-3.13 2.8-7 2.8s-7-1.25-7-2.8V4.8C5 3.25 8.13 2 12 2z" fill="#7c3aed" />
+    <ellipse cx="12" cy="4.8" rx="7" ry="2.8" fill="#a371f7" />
+    <path d="M5 9.6c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8M5 14.4c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8" fill="none" stroke="#c9a5ff" strokeWidth="1.1" strokeLinecap="round" />
+  </svg>
+);
+
 const SKILLS = [
   { name: "PostgreSQL", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" },
+  { name: "NoSQL", icon: null, svg: NOSQL_ICON },
   { name: "Docker", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" },
+  { name: "Vite", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" },
   { name: "C++", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" },
+  { name: "C#", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg" },
   { name: "Java", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" },
   { name: "JavaScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" },
+  { name: "React", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" },
   { name: "HTML", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" },
   { name: "CSS", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" },
-  { name: "Access", icon: null },
+  { name: "Access", icon: null, svg: ACCESS_ICON },
 ];
 
 const LANGS = [
@@ -223,7 +240,7 @@ export default function Portfolio() {
                 {s.icon ? (
                   <img src={s.icon} alt={s.name} width={30} height={30} style={{ flexShrink: 0 }} />
                 ) : (
-                  <svg width="30" height="30" viewBox="0 0 24 24" style={{ flexShrink: 0 }}><rect x="2" y="4" width="20" height="16" rx="2" fill="#A4373A" /><path d="M8 8.5 6 15.5h1.4l.4-1.6h2l.4 1.6H11.6L9.6 8.5H8zm.1 4.2.6-2.5.6 2.5H8.1zM12.5 8.5h3.2v1.2h-1.9v1.6h1.7v1.2h-1.7v1.7h2v1.2h-3.3V8.5z" fill="#fff" /></svg>
+                  s.svg
                 )}
                 <span style={{ fontSize: "0.92rem", fontWeight: 500 }}>{s.name}</span>
               </Card>
