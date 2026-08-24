@@ -27,6 +27,11 @@ const PROJECTS = [
     href: "https://neppyfr.github.io/gradetracker/",
     desc: "A web app for tracking school grades on the Swiss 1–6 scale, with weighted exams, live per-class averages, and cloud sync.",
   },
+  {
+    name: "Traffic Mesh",
+    href: "https://neppyfr.github.io/traffic-mesh/",
+    desc: "A traffic simulation with no lights and no stop signs — every car runs the same rule to negotiate each crossing, on a demo grid or on real city streets.",
+  },
 ];
 
 /* ---------- Theme ---------- */
