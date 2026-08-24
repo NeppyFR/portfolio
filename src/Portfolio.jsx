@@ -234,7 +234,7 @@ export default function Portfolio() {
         {/* Skills */}
         <section style={{ marginTop: 60 }}>
           <SectionTitle>Skills &amp; Tools</SectionTitle>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
             {SKILLS.map((s) => (
               <Card key={s.name} style={{ display: "flex", alignItems: "center", gap: 11, padding: 14 }}>
                 {s.icon ? (
