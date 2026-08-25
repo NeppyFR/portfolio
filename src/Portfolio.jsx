@@ -62,8 +62,41 @@ const C = {
   accent2: "#7c3aed",
 };
 
+/* ---------- Scroll-driven hue ----------
+   The background travels from violet at the top of the page to
+   electric blue at the bottom. Both the page gradients and the
+   cursor field read from the same two ramps so they stay in step. */
+const RAMP_DEEP = [[124, 58, 237], [29, 78, 216]];    // #7c3aed → #1d4ed8
+const RAMP_LIGHT = [[163, 113, 247], [34, 211, 238]]; // #a371f7 → #22d3ee
+
+const mix = ([r1, g1, b1], [r2, g2, b2], t) => [
+  Math.round(r1 + (r2 - r1) * t),
+  Math.round(g1 + (g2 - g1) * t),
+  Math.round(b1 + (b2 - b1) * t),
+];
+const rgba = ([r, g, b], a) => `rgba(${r},${g},${b},${a})`;
+
+const deepAt = (t) => mix(RAMP_DEEP[0], RAMP_DEEP[1], t);
+const lightAt = (t) => mix(RAMP_LIGHT[0], RAMP_LIGHT[1], t);
+
+// hover borders track the same ramp, so they match the wash behind them
+const accentAt = (t) => {
+  const [r, g, b] = lightAt(t);
+  return `rgb(${r},${g},${b})`;
+};
+
+const pageBackground = (t) =>
+  `radial-gradient(900px 500px at 15% -10%, ${rgba(deepAt(t), 0.18)}, transparent 60%), ` +
+  `radial-gradient(800px 500px at 100% 0%, ${rgba(lightAt(t), 0.12)}, transparent 55%), ${C.bg}`;
+
+// 0 at the top of the document, 1 once fully scrolled
+const scrollProgress = () => {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+};
+
 /* ---------- Cursor-reactive background ---------- */
-function CursorField() {
+function CursorField({ scroll }) {
   const canvasRef = useRef(null);
   const mouse = useRef({ x: -9999, y: -9999, tx: -9999, ty: -9999 });
 
@@ -108,14 +141,19 @@ function CursorField() {
       m.x += (m.tx - m.x) * 0.12;
       m.y += (m.ty - m.y) * 0.12;
 
+      // same scroll position the page gradients use
+      const t = scroll.current;
+      const deep = deepAt(t);
+      const light = lightAt(t);
+
       ctx.clearRect(0, 0, w, h);
 
       // glow that follows the cursor
       if (m.tx > -9000) {
         const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 260);
-        g.addColorStop(0, "rgba(124,58,237,0.20)");
-        g.addColorStop(0.5, "rgba(124,58,237,0.07)");
-        g.addColorStop(1, "rgba(124,58,237,0)");
+        g.addColorStop(0, rgba(deep, 0.2));
+        g.addColorStop(0.5, rgba(deep, 0.07));
+        g.addColorStop(1, rgba(deep, 0));
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, w, h);
       }
@@ -138,7 +176,7 @@ function CursorField() {
 
         ctx.beginPath();
         ctx.arc(px, py, size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(163,113,247,${alpha})`;
+        ctx.fillStyle = rgba(light, alpha);
         ctx.fill();
       }
 
@@ -176,13 +214,13 @@ function SectionTitle({ children }) {
   );
 }
 
-function Btn({ href, children }) {
+function Btn({ href, children, scroll }) {
   const ref = useRef(null);
   return (
     <a
       ref={ref}
       href={href}
-      onMouseEnter={() => { const s = ref.current.style; s.transform = "translateY(-2px)"; s.borderColor = C.accent; s.background = "#1e1830"; }}
+      onMouseEnter={() => { const s = ref.current.style; s.transform = "translateY(-2px)"; s.borderColor = scroll ? accentAt(scroll.current) : C.accent; s.background = "#1e1830"; }}
       onMouseLeave={() => { const s = ref.current.style; s.transform = "none"; s.borderColor = C.border; s.background = C.bgSoft; }}
       style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 16px", border: `1px solid ${C.border}`, borderRadius: 10, background: C.bgSoft, color: C.text, textDecoration: "none", fontSize: "0.92rem", fontWeight: 500, transition: "transform .15s, border-color .15s, background .15s" }}
     >
@@ -191,7 +229,7 @@ function Btn({ href, children }) {
   );
 }
 
-function Card({ children, style, hover = true, href }) {
+function Card({ children, style, hover = true, href, scroll }) {
   const ref = useRef(null);
   // renders as an anchor when href is given, so the whole card is the click target
   const Tag = href ? "a" : "div";
@@ -199,7 +237,7 @@ function Card({ children, style, hover = true, href }) {
     <Tag
       ref={ref}
       href={href}
-      onMouseEnter={hover ? () => { const s = ref.current.style; s.transform = "translateY(-3px)"; s.borderColor = C.accent; } : undefined}
+      onMouseEnter={hover ? () => { const s = ref.current.style; s.transform = "translateY(-3px)"; s.borderColor = scroll ? accentAt(scroll.current) : C.accent; } : undefined}
       onMouseLeave={hover ? () => { const s = ref.current.style; s.transform = "none"; s.borderColor = C.border; } : undefined}
       style={{ border: `1px solid ${C.border}`, borderRadius: 14, background: C.bgSoft, transition: "transform .15s, border-color .15s", ...(href && { display: "block", color: "inherit", textDecoration: "none" }), ...style }}
     >
@@ -211,10 +249,28 @@ function Card({ children, style, hover = true, href }) {
 /* ---------- Main ---------- */
 export default function Portfolio() {
   const year = new Date().getFullYear();
+  const rootRef = useRef(null);
+  const scroll = useRef(0);
+
+  useEffect(() => {
+    // written straight to the node rather than through state, so scrolling
+    // repaints the gradient without re-rendering the whole page
+    const apply = () => {
+      scroll.current = scrollProgress();
+      if (rootRef.current) rootRef.current.style.background = pageBackground(scroll.current);
+    };
+    apply();
+    window.addEventListener("scroll", apply, { passive: true });
+    window.addEventListener("resize", apply);
+    return () => {
+      window.removeEventListener("scroll", apply);
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
 
   return (
-    <div style={{ position: "relative", minHeight: "100vh", color: C.text, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif', lineHeight: 1.6, background: `radial-gradient(900px 500px at 15% -10%, rgba(124,58,237,0.18), transparent 60%), radial-gradient(800px 500px at 100% 0%, rgba(163,113,247,0.12), transparent 55%), ${C.bg}` }}>
-      <CursorField />
+    <div ref={rootRef} style={{ position: "relative", minHeight: "100vh", color: C.text, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif', lineHeight: 1.6, background: pageBackground(0) }}>
+      <CursorField scroll={scroll} />
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 820, margin: "0 auto", padding: "72px 24px 96px" }}>
 
@@ -236,7 +292,7 @@ export default function Portfolio() {
           <SectionTitle>Skills &amp; Tools</SectionTitle>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
             {SKILLS.map((s) => (
-              <Card key={s.name} style={{ display: "flex", alignItems: "center", gap: 11, padding: 14 }}>
+              <Card key={s.name} scroll={scroll} style={{ display: "flex", alignItems: "center", gap: 11, padding: 14 }}>
                 {s.icon ? (
                   <img src={s.icon} alt={s.name} width={30} height={30} style={{ flexShrink: 0 }} />
                 ) : (
@@ -275,7 +331,7 @@ export default function Portfolio() {
           <SectionTitle>Projects</SectionTitle>
           <div style={{ display: "grid", gap: 14 }}>
             {PROJECTS.map((p, i) => (
-              <Card key={i} href={p.href} style={{ padding: "20px 22px" }}>
+              <Card key={i} href={p.href} scroll={scroll} style={{ padding: "20px 22px" }}>
                 <h3 style={{ fontSize: "1.08rem", margin: 0 }}>{p.name}</h3>
                 <p style={{ color: C.muted, fontSize: "0.95rem", marginTop: 6 }}>{p.desc}</p>
               </Card>
