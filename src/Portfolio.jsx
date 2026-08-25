@@ -1,4 +1,18 @@
 import { useEffect, useRef } from "react";
+import BorderGlow from "./BorderGlow";
+import "./glow-overrides.css";
+
+// props shared by every glowing surface, so the effect reads as one system
+const GLOW = {
+  className: "pf-glow",
+  edgeSensitivity: 30,
+  glowColor: "40 80 80",
+  glowRadius: 40,
+  glowIntensity: 1.0,
+  coneSpread: 25,
+  animated: false,
+  colors: ["#c084fc", "#f472b6", "#38bdf8"],
+};
 
 /* ---------- Data ---------- */
 // devicon has no mark for these two, so they ship their own artwork
@@ -229,20 +243,25 @@ function Btn({ href, children, scroll }) {
   );
 }
 
-function Card({ children, style, hover = true, href, scroll }) {
-  const ref = useRef(null);
-  // renders as an anchor when href is given, so the whole card is the click target
+/* BorderGlow supplies the surface — border, radius, background — so the inner
+   element carries only padding and layout. Hover now lives in CSS on the glow
+   wrapper rather than in JS handlers here. */
+function Card({ children, style, hover = true, href, radius = 14 }) {
   const Tag = href ? "a" : "div";
   return (
-    <Tag
-      ref={ref}
-      href={href}
-      onMouseEnter={hover ? () => { const s = ref.current.style; s.transform = "translateY(-3px)"; s.borderColor = scroll ? accentAt(scroll.current) : C.accent; } : undefined}
-      onMouseLeave={hover ? () => { const s = ref.current.style; s.transform = "none"; s.borderColor = C.border; } : undefined}
-      style={{ border: `1px solid ${C.border}`, borderRadius: 14, background: C.bgSoft, transition: "transform .15s, border-color .15s", ...(href && { display: "block", color: "inherit", textDecoration: "none" }), ...style }}
+    <BorderGlow
+      {...GLOW}
+      className={hover ? "pf-glow" : "pf-glow pf-glow--static"}
+      borderRadius={radius}
+      backgroundColor={C.bgSoft}
     >
-      {children}
-    </Tag>
+      <Tag
+        href={href}
+        style={{ height: "100%", boxSizing: "border-box", ...(href && { display: "block", color: "inherit", textDecoration: "none" }), ...style }}
+      >
+        {children}
+      </Tag>
+    </BorderGlow>
   );
 }
 
@@ -258,6 +277,8 @@ export default function Portfolio() {
     const apply = () => {
       scroll.current = scrollProgress();
       if (rootRef.current) rootRef.current.style.background = pageBackground(scroll.current);
+      // hover borders read this from CSS, so they track the same ramp
+      document.documentElement.style.setProperty("--pf-accent", accentAt(scroll.current));
     };
     apply();
     window.addEventListener("scroll", apply, { passive: true });
@@ -292,7 +313,7 @@ export default function Portfolio() {
           <SectionTitle>Skills &amp; Tools</SectionTitle>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
             {SKILLS.map((s) => (
-              <Card key={s.name} scroll={scroll} style={{ display: "flex", alignItems: "center", gap: 11, padding: 14 }}>
+              <Card key={s.name} style={{ display: "flex", alignItems: "center", gap: 11, padding: 14 }}>
                 {s.icon ? (
                   <img src={s.icon} alt={s.name} width={30} height={30} style={{ flexShrink: 0 }} />
                 ) : (
@@ -309,10 +330,10 @@ export default function Portfolio() {
           <SectionTitle>Languages</SectionTitle>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {LANGS.map((l, i) => (
-              <span key={i} style={{ padding: "8px 15px", border: `1px solid ${C.border}`, borderRadius: 999, background: C.bgSoft, fontSize: "0.92rem" }}>
+              <Card key={i} radius={999} style={{ padding: "8px 15px", fontSize: "0.92rem", whiteSpace: "nowrap" }}>
                 {l.flag} <b style={{ fontWeight: 600 }}>{l.name}</b>
                 {l.tag && <span style={{ color: C.muted, fontSize: "0.78rem", marginLeft: 6 }}>{l.tag}</span>}
-              </span>
+              </Card>
             ))}
           </div>
         </section>
@@ -331,7 +352,7 @@ export default function Portfolio() {
           <SectionTitle>Projects</SectionTitle>
           <div style={{ display: "grid", gap: 14 }}>
             {PROJECTS.map((p, i) => (
-              <Card key={i} href={p.href} scroll={scroll} style={{ padding: "20px 22px" }}>
+              <Card key={i} href={p.href} style={{ padding: "20px 22px" }}>
                 <h3 style={{ fontSize: "1.08rem", margin: 0 }}>{p.name}</h3>
                 <p style={{ color: C.muted, fontSize: "0.95rem", marginTop: 6 }}>{p.desc}</p>
               </Card>

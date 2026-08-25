@@ -1,0 +1,41 @@
+/* BorderGlow ships its own card chrome — a white border, a six-layer drop
+   shadow and a 28px radius. The portfolio already has its own, so these
+   rules hand the shape back: same 14px/999px radii, same #241d33 border,
+   no shadow. Only the glow itself is new.
+
+   Kept separate from BorderGlow.css so that file stays vendor-clean and
+   can be replaced wholesale when React Bits updates it. */
+
+.pf-glow.border-glow-card {
+  border-color: #241d33;
+  box-shadow: none;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+/* the hover lift the cards already had; translate3d is preserved so the
+   component keeps its own compositing hint */
+.pf-glow.border-glow-card:hover {
+  transform: translate3d(0, -3px, 0.01px);
+  border-color: var(--pf-accent, #a371f7);
+}
+
+/* the education card opts out of hover, as it did before */
+.pf-glow--static.border-glow-card:hover {
+  transform: translate3d(0, 0, 0.01px);
+  border-color: #241d33;
+}
+
+/* the wrapper should not impose a layout on the content or clip it */
+.pf-glow > .border-glow-inner {
+  display: block;
+  overflow: visible;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-glow.border-glow-card,
+  .pf-glow.border-glow-card:hover {
+    transition: none;
+    transform: translate3d(0, 0, 0.01px);
+  }
+}
